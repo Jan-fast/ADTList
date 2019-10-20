@@ -1,0 +1,340 @@
+#include<iostream>
+#include<stdlib.h>
+#include<fstream>
+using namespace std;
+
+#define TURE 1
+#define FALSE 0
+#define OK 1
+#define ERROR 0
+#define INFEASIBLE -1
+#define OVERFLOW -2
+
+typedef int Status;
+typedef int ElemType;
+typedef struct LNode {
+	ElemType data;
+	struct LNode *next;
+}LNode, *LinkList;
+
+Status InitList(LinkList &L) {
+	LNode *n;
+	n = (LinkList)malloc(sizeof(LNode));
+	L = n;
+	if (L == NULL)
+		exit(OVERFLOW);
+	L->next = NULL;
+	return OK;
+}
+
+Status DestroyList(LinkList &L) {
+	LNode *p;
+	LNode *q;
+	if (L == NULL)
+		return ERROR;
+	p = L->next;
+	q = L->next;
+	while (q) {
+		q = q->next;
+		free(p);
+		p = q;
+	}
+	L->next = NULL;
+	return OK;
+}
+
+Status ClearList(LinkList &L) {
+	LNode *q, *p;
+	if (L == NULL)
+		return ERROR;
+	q = L->next;
+	while (q) {
+		q->data = 0;
+		p = q;
+		q = q->next;
+		free(q);
+	}
+	L->next = NULL;
+	return OK;
+}
+
+Status ListEmpty(LinkList L) {
+	if (L == NULL)
+		return TURE;
+	else
+		return FALSE;
+}
+
+Status ListLength(LinkList L) {
+	LNode *p;
+	int length = 0;
+	if (L == NULL)
+		return ERROR;
+	p = L->next;
+	while (p) {
+		++length;
+		p = p->next;
+	}
+	return length;
+}
+
+Status GetElem(LinkList L, int i, ElemType &e) {
+	if (i <= 0 || i > ListLength(L))
+		return ERROR;
+	LNode *q;
+	q = L;
+	for (int j = 0; j < i; j++)
+		q = q->next;
+	e = q->data;
+	return OK;
+}
+
+Status compare_elem(ElemType e1, ElemType e2) {
+	if (e1 == e2)
+		return TURE;
+	else
+		return FALSE;
+}
+
+Status LocateElem(LinkList L, ElemType e, Status(*compare)(ElemType, ElemType)) {
+	int i = 0;
+	LNode *p;
+	p = L;
+	while (i <= ListLength(L) && !(*compare)(p->data, e)) {
+		p = p->next;
+		i++;
+	}
+	if (i <= ListLength(L))
+		return i;
+	else
+		return ERROR;
+}
+
+Status PriorElem(LinkList L, ElemType cur_e, ElemType &pre_e) {
+	LNode *p;
+	p = L;
+	while (p->next) {
+		if (p->next->data == cur_e) {
+			if (p == L) {
+				cout << cur_e << " is the first one." << endl;
+				pre_e = INFEASIBLE;
+				return INFEASIBLE;
+			}
+			pre_e = p->data;
+			break;
+		}
+		p = p->next;
+	}
+	if (p->next == NULL)
+		return ERROR;
+	return OK;
+}
+
+Status NextElem(LinkList L, ElemType cur_e, ElemType &next_e) {
+	LNode *p;
+	p = L->next;
+	while (p) {
+		if (p->data == cur_e) {
+			if (p->next == NULL) {
+				cout << cur_e << " is the last one." << endl;
+				next_e = INFEASIBLE;
+				return INFEASIBLE;
+			}
+			next_e = p->next->data;
+			break;
+		}
+		p = p->next;
+	}
+	if (p == NULL)
+		return ERROR;
+	return OK;
+}
+
+Status ListInsert(LinkList &L, int i, ElemType e) {
+	LNode *p, *q;
+	q = (LinkList)malloc(sizeof(LNode));
+	q->data = e;
+	p = L;
+	if (i<1 || i>ListLength(L))
+		return ERROR;
+	for (int j = 1; j < i; j++)
+		p = p->next;
+	q->next = p->next;
+	p->next = q;
+	return OK;
+}
+
+Status ListDelete(LinkList &L, int i, ElemType &e) {
+	LNode *p, *q;
+	p = L->next;
+	q = L;
+	if (i<1 || i>ListLength(L))
+		return ERROR;
+	for (int j = 1; j < i; j++) {
+		p = p->next;
+		q = q->next;
+	}
+	q->next = p->next;
+	e = p->data;
+	free(p);
+	return OK;
+}
+
+Status visit(ElemType e) {
+	if (e)
+		return TURE;
+	else
+		return FALSE;
+}
+
+Status ListTraverse(LinkList L, Status(*visit)(ElemType)) {
+	LNode *p;
+	int count = 0;
+	p = L->next;
+	int i;
+	for (i = 0; i < ListLength(L); i++) {
+		count += visit(p->data);
+		p = p->next;
+	}
+	return count;
+}
+
+Status InputList(LinkList &L) {
+	LNode *p, *q;
+	fstream datafile;
+	ElemType n;
+	datafile.open("LinkList.txt", ios::in);
+	if (!datafile) {
+		cout << "fail to open!" << endl;
+		exit(0);
+	}
+	q = L;
+	while (!datafile.eof()) {
+		datafile >> n;
+		if (datafile.fail())
+			break;
+		p = (LinkList)malloc(sizeof(LNode));
+		p->data = n;
+		q->next = p;
+		q = p;
+	}
+	q->next = NULL;
+	datafile.close();
+	return OK;
+}
+
+Status Display(LinkList L) {
+	LNode *r;
+	if (L == NULL) {
+		cout << "there is no list!" << endl;
+		return ERROR;
+	}
+	r = L->next;
+	cout << "the list is:" << endl;
+	for (int i = 0; i < ListLength(L); i++) {
+		cout << r->data << " ";
+		r = r->next;
+	}
+	cout << endl;
+	return OK;
+}
+
+int main() {
+	LinkList L;
+	int i;
+	InitList(L);
+	InputList(L);
+	Display(L);
+	cout << "input your choice: ";
+	cin >> i;
+	switch (i)
+	{
+	case 1: {
+		DestroyList(L);
+		Display(L);
+		break;
+	}
+	case 2: {
+		ClearList(L);
+		Display(L);
+		break;
+	}
+	case 3: {
+		cout << ListEmpty(L) << endl;
+		break;
+	}
+	case 4: {
+		cout << ListLength(L) << endl;
+		break;
+	}
+	case 5: {
+		int n;
+		ElemType e;
+		cout << "input where you want to get:" << endl;
+		cin >> n;
+		GetElem(L, n, e);
+		cout << e << endl;
+		break;
+	}
+	case 6: {
+		ElemType e;
+		cout << "input what you want to locate:" << endl;
+		cin >> e;
+		cout << LocateElem(L, e, compare_elem) << endl;
+		break;
+	}
+	case 7: {
+		ElemType cur_e, pre_e;
+		cout << "input which prior want to get:" << endl;
+		cin >> cur_e;
+		PriorElem(L, cur_e, pre_e);
+		if (pre_e == -1) {
+			break;
+		}
+		cout << pre_e << endl;
+		break;
+	}
+	case 8: {
+		ElemType cur_e, next_e;
+		cout << "input which next want to get:" << endl;
+		cin >> cur_e;
+		NextElem(L, cur_e, next_e);
+		if (next_e == -1) {
+			break;
+		}
+		cout << next_e << endl;
+		break;
+	}
+	case 9: {
+		ElemType e;
+		int i;
+		cout << "input where want to insert: ";
+		cin >> i;
+		cout << "input what want to insert: ";
+		cin >> e;
+		ListInsert(L, i, e);
+		Display(L);
+		break;
+	}
+	case 10: {
+		ElemType e;
+		int i;
+		cout << "input where want to delete: ";
+		cin >> i;
+		ListDelete(L, i, e);
+		cout << e << " already be deleted!" << endl;
+		Display(L);
+		break;
+	}
+	case 11: {
+		int count;
+		count = ListTraverse(L, visit);
+		cout << "finish traverse, traverse times: " << count << endl;
+		break;
+	}
+	default:
+		break;
+	}
+	system("pause");
+	return 0;
+}
